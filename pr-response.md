@@ -31,6 +31,8 @@
 **Engagement with reviewer's point:** This also brings the watchlist in line with `get_collection()`, which already sorts by `date_added.desc()`. The two features were inconsistent with each other for no clear reason — alphabetical on one, recency on the other — and @dev-lead's reasoning ("most users want to see what they added recently") applies just as much to the watchlist as it already does to the collection view. I don't see a strong case for alphabetical as the *default*; it's more useful as an optional sort a user could choose later, not the first thing they see.
 
 ## Comment 6 — Rebase
+
+![git log --oneline screenshot](screenshots/commit-history.png)
 **What conflicted:** Two files conflicted during `git rebase origin/main`:
 1. `.gitignore` — both branches had independently added one, with slightly different entries (main's version was missing `.pytest_cache/`, which mine included).
 2. `models.py` — `main` had refactored `Film.id` from `Integer` to `String(36)` (UUID) and updated `CollectionEntry.film_id` to match. My branch's `WatchlistEntry` class didn't exist yet on `main` at that point in history, so git flagged it as a straight add/modify conflict rather than a line-level diff.
