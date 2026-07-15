@@ -3,7 +3,7 @@
 ## AI Usage
 <!-- Fill in at the end — how you used AI tools during this project -->
 
-### Comment 1 — Rename
+## Comment 1 — Rename
 **What I did:** Renamed `save_to_watchlist()` to `add_to_watchlist()` in `services/watchlist_service.py` to match the project's verb_to_noun convention already used by `add_to_collection()`. Updated the one call site in `routes/watchlist.py` — both the import statement and the function call inside `add_film()`.
 **How I verified:** Ran `grep -rn "save_to_watchlist" .` across the repo after the rename to confirm zero remaining references. Also ran `pytest tests/ -v` to confirm the existing 4 tests still pass with no import errors.
 
@@ -40,4 +40,24 @@
 **How I verified no conflict remains:** Ran `grep -n "<<<<<<<\|=======\|>>>>>>>" models.py` to confirm no leftover conflict markers, then ran the full test suite (`pytest tests/ -v`) after the rebase completed — all 6 tests pass, confirming the UUID-typed `film_id` works correctly with the rest of the watchlist and collection logic. Also confirmed via `git log --oneline` that the branch history is fully linear with no merge commits.
 
 ## PR Description
-<!-- Written at the end — feature overview, design decisions, manual testing steps -->
+
+### What this feature does
+Adds a watchlist feature to CineLog, letting users save films they want to watch later, separate from their collection of already-watched films. Includes a `WatchlistEntry` model, `add_to_watchlist()` / `get_watchlist()` service functions, and REST endpoints (`GET /watchlist/<user_id>`, `POST /watchlist/<user_id>/add`).
+
+### Design decisions
+1. **Default visibility (`public`):** New watchlist entries default to `public=False` (private). A want-to-watch list can include picks a user wouldn't want a stranger to see by default, so entries stay private unless explicitly made public. See Comment 4 in this doc for full reasoning and an acknowledged gap: `get_watchlist()` doesn't currently enforce the `public` flag at the route/service level, so it's stored but not yet used to restrict access.
+2. **Sort order:** `get_watchlist()` returns entries sorted by `date_added` descending (most recent first), matching the same pattern already used by `get_collection()`. See Comment 5 for full reasoning.
+
+### How to manually test
+1. Start the app: `python app.py`
+2. Create a user and a film via the collection endpoints (or directly via the database/shell).
+3. Add a film to a user's watchlist:
+   `curl -X POST http://127.0.0.1:5000/watchlist/<user_id>/add -H "Content-Type: application/json" -d '{"film_id": "<film_id>"}'`
+4. Confirm it appears when fetching the watchlist:
+   `curl http://127.0.0.1:5000/watchlist/<user_id>`
+5. Try adding the same film again — confirm it returns an error rather than creating a duplicate entry.
+6. Add a second film with a later timestamp and confirm it appears first in the returned list (most-recently-added-first ordering).
+
+
+## AI Usage
+I used AI throughout this project for orientation (walking through models.py, collection_service.py, and test_collection.py before touching the review comments), for identifying the exact code patterns to mirror (dedup check structure, test fixture structure), and for troubleshooting git/terminal issues (fork branch setup, rebase conflict resolution, commit message editing). For Comment 4 (default visibility), I initially considered a generic "social discovery" argument, but reconsidered after thinking through a concrete personal scenario — whether I'd want a stranger seeing an unusual pick on my own watchlist — which led me to change the actual default from public to private rather than defend the original value. For Comment 5, I agreed with the reviewer's reasoning after considering my own habits looking at a want-to-watch list.
